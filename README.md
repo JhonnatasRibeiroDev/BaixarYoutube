@@ -13,9 +13,8 @@ Desenvolvida usando **PyQt5** e **yt-dlp**, permite:
 
 ## 📸 **Interface**
 
-<div align="center">
-<img src="screenshot.png" width="600">
-</div>
+![Captura de tela de 2025-05-07 09-10-59](https://github.com/user-attachments/assets/7a32f1fb-3af8-4d40-970b-53a6989eb8ee)
+
 
 ---
 
