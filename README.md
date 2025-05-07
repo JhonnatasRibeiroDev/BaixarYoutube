@@ -26,7 +26,7 @@ Desenvolvida usando **PyQt5** e **yt-dlp**, permite:
 ### 1️⃣ Clone o repositório:
 
 ```bash
-git clone https://github.com/seu-usuario/jtubedownloader.git
+git clone https://github.com/JhonnatasRibeiroDev/jtubedownloader.git
 cd jtubedownloader
 ```
 
