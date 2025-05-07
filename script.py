@@ -169,10 +169,14 @@ class YouTubeDownloader(QWidget):
         self.output_folder_label = QLabel(os.path.expanduser("~/Videos"))
         self.format_combo = QComboBox()
         self.format_combo.addItems(["Vídeo (mp4)", "Apenas áudio (mp3)"])
+        self.platform_combo = QComboBox()
+        self.platform_combo.addItems(["YouTube", "Bandcamp"])
         config_layout.addWidget(self.output_folder_button)
         config_layout.addWidget(self.output_folder_label)
         config_layout.addWidget(QLabel("Formato:"))
         config_layout.addWidget(self.format_combo)
+        config_layout.addWidget(QLabel("Plataforma:"))
+        config_layout.addWidget(self.platform_combo)
         config_group.setLayout(config_layout)
         right_layout.addWidget(config_group)
 
@@ -190,6 +194,14 @@ class YouTubeDownloader(QWidget):
         log_layout.addWidget(self.log_output)
         log_group.setLayout(log_layout)
         right_layout.addWidget(log_group)
+
+        metadata_group = QGroupBox("📑 Metadados Detalhados")
+        self.metadata_output = QTextEdit()
+        self.metadata_output.setReadOnly(True)
+        metadata_layout = QVBoxLayout()
+        metadata_layout.addWidget(self.metadata_output)
+        metadata_group.setLayout(metadata_layout)
+        right_layout.addWidget(metadata_group)
 
         main_layout.addLayout(right_layout, 0, 1)
 
@@ -211,6 +223,9 @@ class YouTubeDownloader(QWidget):
             QMessageBox.warning(self, "Erro", "Por favor, insira um link.")
             return
 
+        plataforma = self.platform_combo.currentText()
+        self.append_log(f"Iniciando busca de metadados na plataforma: {plataforma}")
+
         self.fetch_button.setEnabled(False)
         self.metadata_thread = MetadataThread(link)
         self.metadata_thread.log_signal.connect(self.append_log)
@@ -229,6 +244,11 @@ class YouTubeDownloader(QWidget):
             url = entry.get('webpage_url')
             thumb_url = entry.get('thumbnail')
             self.add_video_item(title, url, thumb_url)
+
+        import json
+        info_to_show = entries[0]
+        formatted_metadata = json.dumps(info_to_show, indent=4, ensure_ascii=False)
+        self.metadata_output.setPlainText(formatted_metadata)
 
     def add_video_item(self, title, url, thumb_url):
         widget = QWidget()
@@ -271,13 +291,31 @@ class YouTubeDownloader(QWidget):
             QMessageBox.warning(self, "Erro", "Nenhum vídeo selecionado.")
             return
 
+        selected_platform = self.platform_combo.currentText()
         selected_format = self.format_combo.currentText()
-        if "áudio" in selected_format:
+
+        if selected_platform == "Bandcamp":
             ydl_format = 'bestaudio/best'
-            postprocessors = [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '192'}]
+            postprocessors = [
+                {'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '192'},
+                {'key': 'FFmpegMetadata'},
+                {'key': 'EmbedThumbnail'}
+            ]
         else:
-            ydl_format = 'bestvideo+bestaudio/best'
-            postprocessors = [{'key': 'FFmpegVideoConvertor', 'preferedformat': 'mp4'}]
+            if "áudio" in selected_format:
+                ydl_format = 'bestaudio/best'
+                postprocessors = [
+                    {'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '192'},
+                    {'key': 'FFmpegMetadata'},
+                    {'key': 'EmbedThumbnail'}
+                ]
+            else:
+                ydl_format = 'bestvideo+bestaudio/best'
+                postprocessors = [
+                    {'key': 'FFmpegVideoConvertor', 'preferedformat': 'mp4'},
+                    {'key': 'FFmpegMetadata'},
+                    {'key': 'EmbedThumbnail'}
+                ]
 
         self.download_button.setEnabled(False)
         self.progress_bar.setValue(0)
