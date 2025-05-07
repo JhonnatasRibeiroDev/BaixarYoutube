@@ -1,6 +1,8 @@
 import sys
 import os
 import requests
+import subprocess
+import platform
 from PyQt5.QtWidgets import (QApplication, QWidget, QLabel, QLineEdit, QPushButton,
                              QListWidget, QListWidgetItem, QMessageBox, QFileDialog,
                              QProgressBar, QComboBox, QTextEdit, QCheckBox, QHBoxLayout,
@@ -171,12 +173,17 @@ class YouTubeDownloader(QWidget):
         self.format_combo.addItems(["Vídeo (mp4)", "Apenas áudio (mp3)"])
         self.platform_combo = QComboBox()
         self.platform_combo.addItems(["YouTube", "Bandcamp"])
+        self.open_folder_button = QPushButton("Abrir Pasta")
+        self.open_folder_button.clicked.connect(self.abrir_pasta_download)
+
         config_layout.addWidget(self.output_folder_button)
         config_layout.addWidget(self.output_folder_label)
         config_layout.addWidget(QLabel("Formato:"))
         config_layout.addWidget(self.format_combo)
         config_layout.addWidget(QLabel("Plataforma:"))
         config_layout.addWidget(self.platform_combo)
+        config_layout.addWidget(self.open_folder_button)
+
         config_group.setLayout(config_layout)
         right_layout.addWidget(config_group)
 
@@ -216,6 +223,19 @@ class YouTubeDownloader(QWidget):
         if folder:
             self.download_folder = folder
             self.output_folder_label.setText(folder)
+
+    def abrir_pasta_download(self):
+        try:
+            path = self.download_folder
+            if platform.system() == "Windows":
+                os.startfile(path)
+            elif platform.system() == "Darwin":  # macOS
+                subprocess.Popen(["open", path])
+            else:  # Linux
+                subprocess.Popen(["xdg-open", path])
+            self.append_log(f"Abrindo pasta: {path}")
+        except Exception as e:
+            QMessageBox.warning(self, "Erro", f"Não foi possível abrir a pasta: {e}")
 
     def buscar_detalhes(self):
         link = self.link_input.text().strip()
